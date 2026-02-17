@@ -29,22 +29,6 @@ jobs:
       - name: Executar tests unitaris
         run: mvn clean test
 
-      - name: Publicar resultats dels tests unitaris
-        uses: dorny/test-reporter@v1
-        if: always()
-        with:
-          name: Resultats Tests Unitaris
-          path: target/surefire-reports/*.xml
-          reporter: java-junit
-          fail-on-error: true
-
-      - name: Pujar informes de tests unitaris
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: unit-test-reports
-          path: target/surefire-reports/
-
   integration-tests:
     name: Tests d'Integració
     runs-on: ubuntu-latest
@@ -65,52 +49,3 @@ jobs:
 
       - name: Executar tests d'integració
         run: mvn clean verify
-
-      - name: Publicar resultats dels tests d'integració
-        uses: dorny/test-reporter@v1
-        if: always()
-        with:
-          name: Resultats Tests d'Integració
-          path: target/failsafe-reports/*.xml
-          reporter: java-junit
-          fail-on-error: true
-
-      - name: Pujar informes de tests d'integració
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: integration-test-reports
-          path: target/failsafe-reports/
-
-  report-results:
-    name: Comentar Resultats
-    runs-on: ubuntu-latest
-    needs: [unit-tests, integration-tests]
-    if: always() && github.event.pull_request.draft == false
-
-    steps:
-      - name: Comentar resultats en PR
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const unitTestsResult = '${{ needs.unit-tests.result }}';
-            const integrationTestsResult = '${{ needs.integration-tests.result }}';
-            
-            const unitIcon = unitTestsResult === 'success' ? '✅' : '❌';
-            const integrationIcon = integrationTestsResult === 'success' ? '✅' : '❌';
-            
-            const body = `## 🧪 Resultats dels Tests
-            
-            | Tipus de Test | Estat |
-            |--------------|-------|
-            | Tests Unitaris | ${unitIcon} ${unitTestsResult} |
-            | Tests d'Integració | ${integrationIcon} ${integrationTestsResult} |
-            
-            Revisa els detalls dels tests en els checks de GitHub Actions.`;
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: body
-            });
