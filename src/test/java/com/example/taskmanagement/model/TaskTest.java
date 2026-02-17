@@ -50,7 +50,7 @@ class TaskTest {
     }
 
     @Test
-    void constructor_defaultsToFavoritesFalse() {
+    void constructor_defaultsToFavoriteFalse() {
         Task task = new Task("Title", "Description", TaskStatus.PENDING);
 
         assertEquals("Title", task.getTitle());
