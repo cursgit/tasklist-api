@@ -13,6 +13,8 @@ public class TaskUpdateDTO {
 
     private TaskStatus status;
 
+    private Boolean favorite;
+
     // Constructors
     public TaskUpdateDTO() {
     }
@@ -46,5 +48,13 @@ public class TaskUpdateDTO {
 
     public void setStatus(TaskStatus status) {
         this.status = status;
+    }
+
+    public Boolean getFavorite() {
+        return favorite;
+    }
+
+    public void setFavorite(Boolean favorite) {
+        this.favorite = favorite;
     }
 }

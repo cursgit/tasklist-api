@@ -26,6 +26,9 @@ public class Task {
     @Column(nullable = false)
     private TaskStatus status = TaskStatus.PENDING;
 
+    @Column(nullable = false)
+    private Boolean favorite = false;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -51,6 +54,7 @@ public class Task {
         this.title = title;
         this.description = description;
         this.status = status != null ? status : TaskStatus.PENDING;
+        this.favorite = false;
     }
 
     // Getters and Setters
@@ -84,6 +88,14 @@ public class Task {
 
     public void setStatus(TaskStatus status) {
         this.status = status;
+    }
+
+    public Boolean getFavorite() {
+        return favorite;
+    }
+
+    public void setFavorite(Boolean favorite) {
+        this.favorite = favorite;
     }
 
     public LocalDateTime getCreatedAt() {

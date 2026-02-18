@@ -46,6 +46,17 @@ class TaskTest {
         assertNull(task.getTitle());
         assertNull(task.getDescription());
         assertEquals(TaskStatus.PENDING, task.getStatus());
+        assertFalse(task.getFavorite());
+    }
+
+    @Test
+    void constructor_defaultsToFavoriteFalse() {
+        Task task = new Task("Title", "Description", TaskStatus.PENDING);
+
+        assertEquals("Title", task.getTitle());
+        assertEquals("Description", task.getDescription());
+        assertEquals(TaskStatus.PENDING, task.getStatus());
+        assertFalse(task.getFavorite());
     }
 
     @Test
@@ -142,11 +153,36 @@ class TaskTest {
         task.setTitle("Title");
         task.setDescription("Description");
         task.setStatus(TaskStatus.COMPLETED);
+        task.setFavorite(true);
 
         assertEquals(1L, task.getId());
         assertEquals("Title", task.getTitle());
         assertEquals("Description", task.getDescription());
         assertEquals(TaskStatus.COMPLETED, task.getStatus());
+        assertTrue(task.getFavorite());
+    }
+
+    @Test
+    void favorite_canBeToggledFromFalseToTrue() {
+        Task task = new Task("Title", "Description", TaskStatus.PENDING);
+
+        assertFalse(task.getFavorite());
+
+        task.setFavorite(true);
+
+        assertTrue(task.getFavorite());
+    }
+
+    @Test
+    void favorite_canBeToggledFromTrueToFalse() {
+        Task task = new Task("Title", "Description", TaskStatus.PENDING);
+        task.setFavorite(true);
+
+        assertTrue(task.getFavorite());
+
+        task.setFavorite(false);
+
+        assertFalse(task.getFavorite());
     }
 
     @Test

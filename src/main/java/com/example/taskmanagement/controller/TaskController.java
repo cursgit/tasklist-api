@@ -49,6 +49,12 @@ public class TaskController {
         return ResponseEntity.ok(tasks);
     }
 
+    @GetMapping("/favorites")
+    public ResponseEntity<List<Task>> getFavoriteTasks() {
+        List<Task> tasks = taskService.getFavoriteTasks();
+        return ResponseEntity.ok(tasks);
+    }
+
     @PostMapping
     public ResponseEntity<Task> createTask(@Valid @RequestBody Task task) {
         Task createdTask = taskService.createTask(task);
@@ -58,6 +64,13 @@ public class TaskController {
     @PutMapping("/{id}")
     public ResponseEntity<Task> updateTask(@PathVariable Long id, @Valid @RequestBody TaskUpdateDTO taskDetails) {
         return taskService.updateTask(id, taskDetails)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PatchMapping("/{id}/favorite")
+    public ResponseEntity<Task> toggleFavorite(@PathVariable Long id) {
+        return taskService.toggleFavorite(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }

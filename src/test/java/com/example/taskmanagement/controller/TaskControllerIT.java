@@ -1,5 +1,6 @@
 package com.example.taskmanagement.controller;
 
+import com.example.taskmanagement.dto.TaskUpdateDTO;
 import com.example.taskmanagement.model.Task;
 import com.example.taskmanagement.model.TaskStatus;
 import com.example.taskmanagement.repository.TaskRepository;
@@ -82,7 +83,7 @@ class TaskControllerIT {
     void updateTask_updatesExistingTask() throws Exception {
         Task saved = taskRepository.save(new Task("Old", "Old desc", TaskStatus.PENDING));
 
-        Task update = new Task();
+        TaskUpdateDTO update = new TaskUpdateDTO();
         update.setTitle("New");
         update.setStatus(TaskStatus.IN_PROGRESS);
 
@@ -202,7 +203,7 @@ class TaskControllerIT {
 
     @Test
     void updateTask_returnsNotFoundForNonexistentTask() throws Exception {
-        Task update = new Task("Updated", "New desc", TaskStatus.COMPLETED);
+        TaskUpdateDTO update = new TaskUpdateDTO("Updated", "New desc", TaskStatus.COMPLETED);
 
         mockMvc.perform(put("/api/tasks/9999")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -214,7 +215,7 @@ class TaskControllerIT {
     void updateTask_allowsPartialUpdate() throws Exception {
         Task saved = taskRepository.save(new Task("Original", "Original desc", TaskStatus.PENDING));
 
-        Task update = new Task();
+        TaskUpdateDTO update = new TaskUpdateDTO();
         update.setStatus(TaskStatus.COMPLETED);
 
         mockMvc.perform(put("/api/tasks/{id}", saved.getId())
@@ -243,5 +244,86 @@ class TaskControllerIT {
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.status").value(status.toString()));
         }
+    }
+
+    @Test
+    void toggleFavorite_togglesFromFalseToTrue() throws Exception {
+        Task saved = taskRepository.save(new Task("Task", "Desc", TaskStatus.PENDING));
+
+        mockMvc.perform(patch("/api/tasks/{id}/favorite", saved.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.favorite").value(true));
+    }
+
+    @Test
+    void toggleFavorite_togglesFromTrueToFalse() throws Exception {
+        Task task = new Task("Task", "Desc", TaskStatus.PENDING);
+        task.setFavorite(true);
+        Task saved = taskRepository.save(task);
+
+        mockMvc.perform(patch("/api/tasks/{id}/favorite", saved.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.favorite").value(false));
+    }
+
+    @Test
+    void toggleFavorite_returnsNotFoundForNonexistentTask() throws Exception {
+        mockMvc.perform(patch("/api/tasks/9999/favorite"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void getFavoriteTasks_returnsOnlyFavoriteTasks() throws Exception {
+        Task favorite1 = new Task("Favorite 1", "Desc", TaskStatus.PENDING);
+        favorite1.setFavorite(true);
+        taskRepository.save(favorite1);
+
+        Task nonFavorite = new Task("Not Favorite", "Desc", TaskStatus.PENDING);
+        taskRepository.save(nonFavorite);
+
+        Task favorite2 = new Task("Favorite 2", "Desc", TaskStatus.COMPLETED);
+        favorite2.setFavorite(true);
+        taskRepository.save(favorite2);
+
+        mockMvc.perform(get("/api/tasks/favorites"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[*].title", containsInAnyOrder("Favorite 1", "Favorite 2")))
+                .andExpect(jsonPath("$[*].favorite", everyItem(is(true))));
+    }
+
+    @Test
+    void getFavoriteTasks_returnsEmptyWhenNoFavorites() throws Exception {
+        taskRepository.save(new Task("Task 1", "Desc", TaskStatus.PENDING));
+        taskRepository.save(new Task("Task 2", "Desc", TaskStatus.COMPLETED));
+
+        mockMvc.perform(get("/api/tasks/favorites"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    void createTask_defaultsFavoriteToFalse() throws Exception {
+        Task request = new Task("New Task", "Description", TaskStatus.PENDING);
+
+        mockMvc.perform(post("/api/tasks")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.favorite").value(false));
+    }
+
+    @Test
+    void updateTask_updatesFavoriteField() throws Exception {
+        Task saved = taskRepository.save(new Task("Task", "Desc", TaskStatus.PENDING));
+
+        TaskUpdateDTO update = new TaskUpdateDTO();
+        update.setFavorite(true);
+
+        mockMvc.perform(put("/api/tasks/{id}", saved.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(update)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.favorite").value(true));
     }
 }

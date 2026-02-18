@@ -237,4 +237,92 @@ class TaskServiceTest {
         assertTrue(results.isEmpty());
         verify(taskRepository).findByStatus(TaskStatus.CANCELLED);
     }
+
+    @Test
+    void getFavoriteTasks_returnsOnlyFavoriteTasks() {
+        Task task1 = new Task("Favorite Task", "Important", TaskStatus.PENDING);
+        task1.setFavorite(true);
+        Task task2 = new Task("Another Favorite", "Also important", TaskStatus.COMPLETED);
+        task2.setFavorite(true);
+        when(taskRepository.findByFavoriteTrue()).thenReturn(List.of(task1, task2));
+
+        List<Task> results = taskService.getFavoriteTasks();
+
+        assertEquals(2, results.size());
+        assertTrue(results.get(0).getFavorite());
+        assertTrue(results.get(1).getFavorite());
+        verify(taskRepository).findByFavoriteTrue();
+    }
+
+    @Test
+    void getFavoriteTasks_returnsEmptyWhenNoFavorites() {
+        when(taskRepository.findByFavoriteTrue()).thenReturn(List.of());
+
+        List<Task> results = taskService.getFavoriteTasks();
+
+        assertTrue(results.isEmpty());
+        verify(taskRepository).findByFavoriteTrue();
+    }
+
+    @Test
+    void toggleFavorite_togglesFalseToTrue() {
+        Task task = new Task("Task", "Desc", TaskStatus.PENDING);
+        task.setId(1L);
+        task.setFavorite(false);
+        when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
+        when(taskRepository.save(anyNonNull(Task.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0, Task.class));
+
+        Optional<Task> result = taskService.toggleFavorite(1L);
+
+        assertTrue(result.isPresent());
+        assertTrue(result.get().getFavorite());
+        verify(taskRepository).save(task);
+    }
+
+    @Test
+    void toggleFavorite_togglesTrueToFalse() {
+        Task task = new Task("Task", "Desc", TaskStatus.PENDING);
+        task.setId(1L);
+        task.setFavorite(true);
+        when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
+        when(taskRepository.save(anyNonNull(Task.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0, Task.class));
+
+        Optional<Task> result = taskService.toggleFavorite(1L);
+
+        assertTrue(result.isPresent());
+        assertFalse(result.get().getFavorite());
+        verify(taskRepository).save(task);
+    }
+
+    @Test
+    void toggleFavorite_returnsEmptyWhenTaskNotFound() {
+        when(taskRepository.findById(99L)).thenReturn(Optional.empty());
+
+        Optional<Task> result = taskService.toggleFavorite(99L);
+
+        assertFalse(result.isPresent());
+        verify(taskRepository, never()).save(anyNonNull(Task.class));
+    }
+
+    @Test
+    void updateTask_updatesFavoriteField() {
+        Task existing = new Task("Task", "Desc", TaskStatus.PENDING);
+        existing.setId(1L);
+        existing.setFavorite(false);
+
+        TaskUpdateDTO updates = new TaskUpdateDTO();
+        updates.setFavorite(true);
+
+        when(taskRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(taskRepository.save(anyNonNull(Task.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0, Task.class));
+
+        Optional<Task> result = taskService.updateTask(1L, updates);
+
+        assertTrue(result.isPresent());
+        assertTrue(result.get().getFavorite());
+        verify(taskRepository).save(existing);
+    }
 }

@@ -40,6 +40,10 @@ public class TaskService {
         return taskRepository.findByTitleContainingIgnoreCase(title);
     }
 
+    public List<Task> getFavoriteTasks() {
+        return taskRepository.findByFavoriteTrue();
+    }
+
     public Task createTask(@NonNull Task task) {
         if (task.getStatus() == null) {
             task.setStatus(TaskStatus.PENDING);
@@ -58,7 +62,17 @@ public class TaskService {
             if (taskDetails.getStatus() != null) {
                 task.setStatus(taskDetails.getStatus());
             }
+            if (taskDetails.getFavorite() != null) {
+                task.setFavorite(taskDetails.getFavorite());
+            }
             return taskRepository.save(Objects.requireNonNull(task));
+        });
+    }
+
+    public Optional<Task> toggleFavorite(@NonNull Long id) {
+        return taskRepository.findById(id).map(task -> {
+            task.setFavorite(!task.getFavorite());
+            return taskRepository.save(task);
         });
     }
 
