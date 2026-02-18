@@ -64,7 +64,7 @@ jobs:
           cache: 'maven'
 
       - name: Executar tests d'integració
-        run: mvn clean verify
+        run: mvn clean verify -Dskip.unit.tests=true
 
       - name: Publicar resultats dels tests d'integració
         uses: dorny/test-reporter@v1
